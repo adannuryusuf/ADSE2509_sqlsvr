@@ -142,3 +142,146 @@ values
 (8,	'Hard Disk Drive',5580,'Internal 500 GB'),
 (9,	'Hard Disk Drive',3750,'Internal 120 GB'),
 (10,'Portable Disk Drive',3750,'Internal 500 GB');
+
+alter view vwProduct_Details
+select ProductID, ProductName, Rate, [Description]
+from Product_Details;
+
+update vwProduct_Details
+set [Description] .write(N'Ex',0,2)
+where ProductName like 'Portable Disk Drive';
+
+create table Customer_Details
+(
+  CustID nvarchar(7) not null primary key,
+  AccNo int identity(1,1) not null,
+  AccName nvarchar (20)not null,
+  [Date of Birth] date not null,
+  City nvarchar (25) not null
+);
+
+insert into dbo.Customer_Details
+(CustID,AccName,[Date of Birth],City)
+Values
+('C0001','Jane','1980-02-02','Topeka'),
+('C0002','Haris','1978-12-15','Lansing'),
+('C0003','Pitts','1985-11-10','Columbus'),
+('C0004','Monaliza','1980-11-12','Topeka');
+
+select * from dbo.Customer_Details;
+
+create view vwCustDetails as
+select CustID, AccNo [Account Number], AccName [Account Name],[Date of Birth],City
+from Customer_Details
+
+select * from vwCustDetails;
+
+delete from vwCustDetails
+where CustID like 'C0004';
+
+create view vw2Delete as 
+Select ProductID [Product ID], ProductNumber [Product Number], [name] [Product Name],
+ SafetyStockLevel as [Safety Stock Level]
+ FROM AdventureWorks2022.Production.Product;
+
+ select * from vw2Delete;
+
+ -- remove/delete the vw2Delete view
+ drop view vw2Delete;
+
+ -- view the statements that were used to create the customer details view
+ execute sp_helptext vwCustDetails;
+
+ --create a view to display the average price of produvts using the inbuilt AVG()
+ create view vwAvgPrice as
+ select  ProductName, AVG(Rate)as [Average Price]
+ from dbo.Product_Details
+ group by ProductName;
+
+ select * from vwAvgPrice;
+
+ create view vwProductInformation as
+ select ProductID as [Product ID], productNumber [Product Number], [name] [Product Name], safetystocklevel [Safety Stock Level], ReorderPoint [Reorder Point]
+ from AdventureWorks2022.Production.Product
+ where safetyStocklevel <= 1000
+ with check option;
+
+ select * from vwProductInformation;
+
+ --rey to make changes to the vwProductInformation
+ update vwProductInformation
+ set [Safety Stock Level] = 2500
+ where [Product ID] = 321;
+
+ if OBJECT_ID('Customer')is null
+    create table Customer
+	(
+	  CustID int,
+	  CustName nvarchar(50),
+	  Address nvarchar(60)
+	);
+	else
+	    print('The ''Customer'' Table already exists and will not be recreated!');
+create view vwCustomer as
+select *from Customer;
+
+select * from vwCustomer;
+
+alter table Customer
+add Age tinyint;
+
+--use the sp_refreshview stored procedure to refresh the custoemr view to include the 'age' column
+exec sp_refreshview 'vwCustomer';
+
+exec xp_fileexists 'c:\classfile.txt';
+
+exec xp_fileexists 'C:\Users\a.yusuf\Documents\School Work\adse2509_sqlsvr\ADSE2509_SQLSVR2022.sln';
+
+create procedure uspCustTerritory as
+select top 10 C.CustomerID [Customer ID], C.TerritoryID [Territory ID], T.Name as [Territory Name]
+from AdventureWorks2022.Sales.Customer C
+join AdventureWorks2022.Sales.SalesTerritory T
+on C.TerritoryID = T.TerritoryID;
+
+exec uspCustTerritory;
+
+--view the definition of the statements used to create the customer territory view
+ execute sp_helptext uspCustTerritory;
+
+ --create a custom user defined stored procedure that accepts input parameters
+ create proc uspGetSales
+ @territory nvarchar(40) --input variable to store the name of the region
+ as 
+ select BusinessEntityID, ST.SalesYTD[Sales Year to Date],ST.SalesLastYear as [Sales Last Year]
+ from AdventureWorks2022.Sales.SalesPerson SP
+ join AdventureWorks2022.Sales.SalesTerritory ST
+ on SP.TerritoryID = ST.TerritoryID
+ where ST.Name like @territory;
+
+ --get the sales details for the northwest and northeast regions using the get 
+ --sales custom stored procedure
+ exec uspGetSales 'NorthWest';
+  exec uspGetSales 'NorthEast';
+
+   --create a custom user defined stored procedure that accepts both input and output parameters
+ create proc uspGetToTotalSales
+ @salesTerritory nvarchar(40), --input variable to store the name of the region
+ @sum int output --return variable to hold   the total sals for the spacified region
+ as 
+ select @sum = SUM(ST.SalesYTD)
+ from AdventureWorks2022.Sales.SalesPerson SP
+ join AdventureWorks2022.Sales.SalesTerritory ST
+ on SP.TerritoryID = ST.TerritoryID
+ where ST.Name like @salesTerritory;
+
+ -- get and display the total sales for the 'northwest' and 'northeasst' regions
+ Declare @northWestSales money --variable to hold the northwest total sales
+ exec uspGetToTotalSales 'northWest', @sum = @northWestSales output;
+ --Display the sales for the northwesst region
+ print 'The year-to-date total for the ''NorthWest'' region is Kes.' + convert(nvarchar(100),@northWestSales);
+
+ --get and display the total sales for the 'northeast' region
+ Declare @northEastSales money --variable to hold the northeast total sales
+ exec uspGetToTotalSales 'northEastSales', @sum = @northEastSales output;
+ --Display the sales for the northEast region
+ print 'The year-to-date total for the ''NorthEast'' region is Kes.' + convert(nvarchar(100),@northEastSales);

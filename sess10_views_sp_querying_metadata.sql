@@ -280,8 +280,106 @@ exec uspCustTerritory;
  --Display the sales for the northwesst region
  print 'The year-to-date total for the ''NorthWest'' region is Kes.' + convert(nvarchar(100),@northWestSales);
 
- --get and display the total sales for the 'northeast' region
+ --TO DO - get and display the total sales for the 'northeast' region
+ --This is my answer
  Declare @northEastSales money --variable to hold the northeast total sales
  exec uspGetToTotalSales 'northEastSales', @sum = @northEastSales output;
  --Display the sales for the northEast region
  print 'The year-to-date total for the ''NorthEast'' region is Kes.' + convert(nvarchar(100),@northEastSales);
+
+ --Modify alter a custom SP to add a new column in the result set
+ alter proc uspGetSales
+ @territory nvarchar(40) --input variable to store the name of the region
+ as 
+ select BusinessEntityID, ST.SalesYTD[Sales Year to Date],ST.SalesLastYear as [Sales Last Year], ST.CostYTD as [Cost Year to Date]
+ from AdventureWorks2022.Sales.SalesPerson SP
+ join AdventureWorks2022.Sales.SalesTerritory ST
+ on SP.TerritoryID = ST.TerritoryID
+ where ST.Name like @territory;
+
+--TODO 2: Display the statements used to create the uspGetSales custom procedure
+ --This is my answer
+ execute sp_helptext uspGetSales;
+
+ --get the sales details for the northwest and northeast regions using the modified get
+ --sales custom stored procedure
+ exec uspGetSales 'NorthWest';
+  exec uspGetSales 'NorthEast';
+
+  --Delete SP
+  --create a dummy SP 
+  create procedure usp2Delete
+  with encryption --Hides the statements used to create this SP
+  as
+  select top 10 C.CustomerID [Customer ID], C.TerritoryID [Territory ID], T.Name as [Territory Name]
+  from AdventureWorks2022.Sales.Customer C
+  join AdventureWorks2022.Sales.SalesTerritory T
+  on C.TerritoryID = T.TerritoryID;
+
+exec usp2Delete;
+
+--check for dependencies on the usp2delete custom procedure
+exec sp_depends 'usp2Delete'
+
+--Remove the usp2Delete custom procedure
+drop proc usp2Delete;
+
+--Display the statements used to create the uspCustTerritory custom procedure
+exec sp_helptext 'uspCustTerritory';
+
+--modify the uspCustTerritory custom stored Procedure to hide the statements that were used to create it
+alter procedure uspCustTerritory
+with encryption --Hides the statements used to create this SP 
+as
+select top 10 C.CustomerID [Customer ID], C.TerritoryID [Territory ID], T.Name as [Territory Name]
+from AdventureWorks2022.Sales.Customer C
+join AdventureWorks2022.Sales.SalesTerritory T
+on C.TerritoryID = T.TerritoryID;
+
+
+--Create a nestedd stored procedure an SP that calls other stored procedures
+create proc uspNestedProcedure as
+BEGIN 
+   exec uspCustTerritory
+   execute uspGetSales 'France'
+END
+
+--Execute the nested stored procedure
+exec uspNestedProcedure;
+
+-- -------------------------------------------------
+-- Querying sSystem Metadata
+-- -------------------------------------------------
+--Display a list of user tables and their attributes fromt the system catalog view
+select name, OBJECT_ID, type, type_desc
+from sys.tables;
+
+--Display data from the AD2022DB
+select TABLE_CATALOG, TABLE_SCHEMA,  TABLE_NAME, TABLE_TYPE
+from AdventureWorks2022.INFORMATION_SCHEMA.TABLES;
+
+--Display data from the Adan_custDB
+select TABLE_CATALOG, TABLE_SCHEMA,  TABLE_NAME, TABLE_TYPE
+from Adan_adse_2509_custdb.INFORMATION_SCHEMA.TABLES;
+
+--Display the objectid of the products and the customers table
+select OBJECT_ID('Products') as [Products Table ObjectID]; --1029578706
+select OBJECT_ID('Customer') as [Customer Table ObjectID]; --1525580473
+
+--Display the objectnames of the objectid 1029578706 & 1525580473 table
+select OBJECT_Name('1029578706') as [Name of ObjectID '1029578706'];
+select OBJECT_Name('1525580473') as [Name of ObjectID '1525580473'];
+
+-- Get the version of the sqlServer in which this script is running on
+select SERVERPROPERTY('productversion') as [SQL Server Version];
+
+--Get the edition of the sqlServer in which this script is running on
+select SERVERPROPERTY('edition') as [SQL Server Edition];
+
+--TODO 3: Display the version and edition of your current sql server with a column titled 'SQL Server and Edition'
+
+
+--Display a list of the current user connection details from the sys.dm_exec_sessions view
+select SESSION_ID, login_name, login_time, PROGRAM_NAME
+from sys.dm_exec_sessions
+where login_name = 'EDULINK\a.yusuf' and is_user_process = 1;

@@ -377,7 +377,9 @@ select SERVERPROPERTY('productversion') as [SQL Server Version];
 select SERVERPROPERTY('edition') as [SQL Server Edition];
 
 --TODO 3: Display the version and edition of your current sql server with a column titled 'SQL Server and Edition'
-
+select
+SERVERPROPERTY('ProductVersion') + ' - ' + SERVERPROPERTY('Edition')
+as [SQL Server and Edition];
 
 --Display a list of the current user connection details from the sys.dm_exec_sessions view
 select SESSION_ID, login_name, login_time, PROGRAM_NAME

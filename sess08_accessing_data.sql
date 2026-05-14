@@ -72,12 +72,12 @@ use Adan_adse_2509_custdb;
 
 -- Get/fetch records from one table in AD2025 and insert/add them in a new table in the customer database
 select ProductModelID, Name -- Columns to get values from
-into cust_db_adse2509.dbo.ProductName -- Destination table where rows/tuples wil[dbo].[StoreProduct]l be inserted
-from AdventureWorks2025.Production.ProductModel; -- Source table of the records/tuples
+into Adan_adse_2509_custdb.dbo.ProductName -- Destination table where rows/tuples wil[dbo].[StoreProduct]l be inserted
+from AdventureWorks2022.Production.ProductModel; -- Source table of the records/tuples
 
 -- Confirm whether the table above was created and the records inserted
 Select *
-from Cust_db_adse2509.dbo.ProductName;
+from Adan_adse_2509_custdb.dbo.ProductName;
 
 -- Filtering records using the 'Where' clause
 -- Fetch records whose end date (completion date) is 29th May
@@ -92,7 +92,7 @@ where departmentid < 10;
 
 -- Display all the details of individuals whose suffix starts with 'jr' followed by a single character
 select *
-from Person.person
+from Person.Person
 where suffix like 'Jr_';
 
 -- Display the title, firstname, and lastname of people whose title is 'Mr.' or 'Ms.'
